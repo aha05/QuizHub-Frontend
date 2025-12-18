@@ -151,9 +151,9 @@ export function QuizGrid() {
                 {quiz.category}
               </Badge>
             </div>
-            <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
+            <Button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90">
               <Play className="h-4 w-4" />
-              Start Quiz
+               Start Quiz
             </Button>
           </Card>
         ))}

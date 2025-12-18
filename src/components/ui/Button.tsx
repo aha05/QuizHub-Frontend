@@ -27,6 +27,7 @@ export function Button({
     success: "bg-green-600 text-white hover:bg-green-700",
     danger: "bg-red-600 text-white hover:bg-red-700",
     secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
+    // primary_dark: "bg-gray-200 text-gray-800 hover:bg-gray-300",
   }
 
   return (
