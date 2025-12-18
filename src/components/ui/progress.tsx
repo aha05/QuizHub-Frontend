@@ -28,4 +28,4 @@ function Progress({
   )
 }
 
-export default { Progress }
+export { Progress }

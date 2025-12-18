@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import Button  from "@/components/ui/Button"
-import Card  from "@/components/ui/Card"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,10 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import Badge  from "@/components/ui/badge"
 import { Settings, LogOut, User, Trophy, Star } from "lucide-react"
 
-export default function UserProfileHeader() {
+export function UserProfileHeader() {
   return (
     <Card className="p-6 mb-8 border-border/50 bg-card/50 backdrop-blur">
       <div className="flex items-center justify-between flex-wrap gap-4">

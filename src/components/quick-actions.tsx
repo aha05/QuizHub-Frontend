@@ -1,7 +1,7 @@
-import Button  from "@/components/ui/Button"
+import {Button}  from "@/components/ui/Button"
 import { Shuffle, History, Trophy } from "lucide-react"
 
-export default function QuickActions() {
+export function QuickActions() {
   return (
     <div className="flex flex-wrap gap-3 mb-8">
       <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">

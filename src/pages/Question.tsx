@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Button  from "../components/ui/Button"
-import Card from "../components/ui/Card"
+import {Button}  from "@/components/ui/Button"
+import {Card} from "@/components/ui/Card"
 import { CheckCircle2, XCircle } from "lucide-react"
 
 // TypeScript interfaces

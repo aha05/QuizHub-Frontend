@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import  Card  from "@/components/ui/Card"
-import  Button  from "@/components/ui/Button"
-import  Badge  from "@/components/ui/badge"
+import  {Card}  from "@/components/ui/Card"
+import  {Button}  from "@/components/ui/Button"
+import  {Badge}  from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Play, Clock, BookOpen, Brain, Code, Globe, Lightbulb, Zap } from "lucide-react"
 
@@ -82,7 +82,7 @@ const difficultyColors = {
   Hard: "bg-destructive/20 text-destructive border-destructive/30",
 }
 
-export default function QuizGrid() {
+export function QuizGrid() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all")
 

@@ -186,7 +186,7 @@ const DropdownMenuSeparator = React.forwardRef<
 DropdownMenuSeparator.displayName =
   DropdownMenuPrimitive.Separator.displayName
 
-export default {
+export {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,

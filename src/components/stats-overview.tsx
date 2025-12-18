@@ -1,4 +1,4 @@
-import Card  from "@/components/ui/Card"
+import {Card} from "@/components/ui/Card"
 import { Trophy, Target, CheckCircle2, TrendingUp } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
@@ -34,7 +34,7 @@ const stats = [
   },
 ]
 
-export default function StatsOverview() {
+export function StatsOverview() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {stats.map((stat) => (
