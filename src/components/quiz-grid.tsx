@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
 import  {Card}  from "@/components/ui/Card"
 import  {Button}  from "@/components/ui/Button"
 import  {Badge}  from "@/components/ui/badge"
@@ -83,6 +84,7 @@ const difficultyColors = {
 }
 
 export function QuizGrid() {
+  const navigate = useNavigate()
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all")
 
@@ -151,7 +153,9 @@ export function QuizGrid() {
                 {quiz.category}
               </Badge>
             </div>
-            <Button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90">
+            <Button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
+              onClick={() => navigate('/quiz')}
+            >
               <Play className="h-4 w-4" />
                Start Quiz
             </Button>

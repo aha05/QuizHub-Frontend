@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 
 // Pages
-import Question from "./pages/Question";
+import QuizPage from "./pages/quiz/quiz";
+import QuestionPage from "./pages/quiz/question/question";
 import History from "./pages/History";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
@@ -27,7 +28,8 @@ const App: React.FC = () => {
 
         {/* Catch-all */}
         <Route path="/" element={<Home />} />
-        <Route path="/question" element={<Question />} />
+        <Route path="/quiz" element={<QuizPage />} />
+        <Route path="/question" element={<QuestionPage />} />
         <Route path="/history" element={<History />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="*" element={<NotFound />} />
