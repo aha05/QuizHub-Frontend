@@ -74,7 +74,6 @@ export default function AuthPage() {
             password: password,
           })
           navigate("/admin")
-          
         } catch (error) {
           console.error("Login failed", error)
       }

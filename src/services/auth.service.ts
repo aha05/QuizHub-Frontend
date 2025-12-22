@@ -12,7 +12,7 @@ export interface RegisterPayload {
 }
 
 export interface AuthResponse {
-  accessToken: string
+  token: string
 }
 
 export interface RegisterResponse {
@@ -22,10 +22,20 @@ export interface RegisterResponse {
   password: string
 }
 
+export interface UserResponse {
+  id: number
+  name: string
+  email: string
+  role: string
+}
+
 export const login = async (payload: LoginPayload) => {
   const res = await api.post<AuthResponse>("/auth/login", payload)
-  localStorage.setItem("accessToken", res.data.accessToken)
-  console.log("Access Token" + res.data.accessToken)
+  localStorage.setItem("accessToken", res.data.token)
+
+  const userRes = await api.get<UserResponse>("/auth/me")
+  localStorage.setItem("user", JSON.stringify(userRes.data))
+
   return res.data
 }
 
@@ -34,9 +44,18 @@ export const register = async (payload: RegisterPayload) => {
   return res.data
 }
 
-export const logout = () => {
-  localStorage.removeItem("accessToken")
+export const logout = async () => {
+  try {
+    await api.post("/auth/logout")
+  } catch (err) {
+    console.error(err)
+  } finally {
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("user")
+    window.location.href = "/login"
+  }
 }
+
 
 export const isAuthenticated = () =>
   !!localStorage.getItem("accessToken")

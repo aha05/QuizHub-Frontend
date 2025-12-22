@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
+import { logout } from "@/services/auth.service"
 import { Outlet } from "react-router-dom"
 
 import {
@@ -114,7 +115,9 @@ export function DashboardLayout() {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem> */}
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem className="text-destructive"
+                  onClick={()=>logout()}
+                >
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>

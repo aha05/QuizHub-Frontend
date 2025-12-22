@@ -5,6 +5,7 @@ import QuestionPage from "@/pages/quiz/question/question";
 import History from "@/pages/History";
 import Leaderboard from "@/pages/Leaderboard";
 import NotFound from "@/pages/NotFound";
+import Forbidden from "@/pages/Forbidden";
 import Home from "@/pages/Home";
 
 
@@ -17,6 +18,7 @@ export default function PublicRoutes() {
         <Route path="/question" element={<QuestionPage />} />
         <Route path="/history" element={<History />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/403" element={<Forbidden />} />
         <Route path="*" element={<NotFound />} />
     </>
   )
