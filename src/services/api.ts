@@ -23,12 +23,16 @@ api.interceptors.request.use(
 let isRefreshing = false
 let queue: Array<(token: string) => void> = []
 
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config as any
+    const isAuthEndpoint = originalRequest.url?.includes("/auth/login") ||
+                           originalRequest.url?.includes("/auth/register") ||
+                           originalRequest.url?.includes("/auth/refresh")
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true
 
       if (isRefreshing) {

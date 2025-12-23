@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import toast from "react-hot-toast"
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -74,8 +75,10 @@ export default function AuthPage() {
             password: password,
           })
           navigate("/admin")
+
         } catch (error) {
-          console.error("Login failed", error)
+          toast.error(error?.message || "Register failed")
+          console.error("Login failed", error.message)
       }
     }
 
@@ -86,9 +89,10 @@ export default function AuthPage() {
             password: password,
             name: fullName,
           })
-          console.log("Logged in user:", data)
+          toast.success("User registered!")
         } catch (error) {
-          console.error("Login failed", error)
+          toast.error(error?.message||"Register failed")
+          console.error("Register failed", error?.message)
       }
     }
     setIsLoading(false)

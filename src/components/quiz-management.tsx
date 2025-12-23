@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, FileQuestion } from "lucide-react"
 import { AddQuizDialog } from "@/components/add-quiz-dialog"
+import { AddCategoryDialog } from "@/components/add-category-dialog"
 import { EditQuizDialog } from "@/components/edit-quiz-dialog"
 import { DeleteQuizDialog } from "@/components/delete-quiz-dialog"
 
@@ -76,6 +77,7 @@ export function QuizManagement() {
   const [difficultyFilter, setDifficultyFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [addCategoryDialogOpen, setAddCategoryDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
@@ -99,6 +101,10 @@ export function QuizManagement() {
     const newQuiz = { ...quiz, id: Date.now().toString() }
     setQuizzes([newQuiz, ...quizzes])
     setAddDialogOpen(false)
+  }
+
+  const handleAddCategory = () => {
+    setAddCategoryDialogOpen(false)
   }
 
   const handleEditQuiz = (updatedQuiz: Quiz) => {
@@ -140,10 +146,17 @@ export function QuizManagement() {
           <h1 className="text-3xl font-bold tracking-tight text-balance">Quiz Management</h1>
           <p className="text-muted-foreground mt-1">Create, edit, and manage quizzes</p>
         </div>
-        <Button onClick={() => setAddDialogOpen(true)}>
+        <div>
+        <Button className="me-1" onClick={() => setAddDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Quiz
         </Button>
+
+        <Button className="ms-1" onClick={() => setAddCategoryDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Category
+        </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -320,6 +333,7 @@ export function QuizManagement() {
 
       {/* Dialogs */}
       <AddQuizDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} onAdd={handleAddQuiz} />
+      <AddCategoryDialog open={addCategoryDialogOpen} onOpenChange={setAddCategoryDialogOpen} onAdd={handleAddCategory} />
       {selectedQuiz && (
         <>
           <EditQuizDialog
