@@ -24,8 +24,8 @@ import { EditQuizDialog } from "@/components/edit-quiz-dialog"
 import { DeleteQuizDialog } from "@/components/delete-quiz-dialog"
 import { getQuiz, getCategory } from "@/services/quiz.service"
 
-type Difficulty = "EASY" | "MEDIUM" | "HARD"
-type Status = "ACTIVE" | "INACTIVE"
+type Difficulty = "Easy" | "Medium" | "Hard"
+type Status = "Active" | "Inactive"
 
 interface Category {
   id: number
@@ -112,11 +112,11 @@ export function QuizManagement() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "EASY":
+      case "Easy":
         return "bg-chart-2/20 text-chart-2"
-      case "MEDIUM":
+      case "Medium":
         return "bg-chart-3/20 text-chart-3"
-      case "HARD":
+      case "Hard":
         return "bg-destructive/20 text-destructive"
       default:
         return "bg-muted text-muted-foreground"
@@ -124,7 +124,7 @@ export function QuizManagement() {
   }
 
   const getStatusColor = (status: string) => {
-    return status === "ACTIVE" ? "bg-chart-2/20 text-chart-2" : "bg-muted text-muted-foreground"
+    return status === "Active" ? "bg-chart-2/20 text-chart-2" : "bg-muted text-muted-foreground"
   }
 
   return (
@@ -183,9 +183,9 @@ export function QuizManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Difficulties</SelectItem>
-                <SelectItem value="EASY">Easy</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="HARD">Hard</SelectItem>
+                <SelectItem value="Easy">Easy</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Hard">Hard</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import toast from "react-hot-toast"
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -11,156 +13,274 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-interface Quiz {
+import { createQuiz, getCategory } from "@/services/quiz.service"
+
+/* -------------------- Types -------------------- */
+
+type QuizDifficulty = "EASY" | "MEDIUM" | "HARD"
+type QuizStatus = "ACTIVE" | "INACTIVE"
+
+interface Category {
   id: number
-  title: string
-  description: string
-  category: string
-  difficulty: string
-  status: string
-  totalQuestions: number
-  timeLimit: number
+  name: string
 }
 
 interface QuizDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  quiz: Quiz | null
 }
 
-export function AddQuizDialog({ open, onOpenChange, quiz }: QuizDialogProps) {
+/* -------------------- Component -------------------- */
+
+export function AddQuizDialog({
+  open,
+  onOpenChange,
+}: QuizDialogProps) {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "Programming",
-    difficulty: "Easy",
-    status: "Active",
-    timeLimit: 30,
+    categoryId: 0,
+    difficulty: "EASY" as QuizDifficulty,
+    status: "ACTIVE" as QuizStatus,
+    timeLimit: 15,
   })
 
-  useEffect(() => {
-    if (quiz) {
-      setFormData({
-        title: quiz.title,
-        description: quiz.description,
-        category: quiz.category,
-        difficulty: quiz.difficulty,
-        status: quiz.status,
-        timeLimit: quiz.timeLimit,
-      })
-    } else {
-      setFormData({
-        title: "",
-        description: "",
-        category: "Programming",
-        difficulty: "Easy",
-        status: "Active",
-        timeLimit: 30,
-      })
-    }
-  }, [quiz])
+  const [saving, setSaving] = useState(false)
 
-   const handleSubmit = () => {
-    console.log("Saving quiz..")
-    onOpenChange(false)
+  /* -------------------- Load Categories -------------------- */
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true)
+        const data = await getCategory()
+        setCategories(data)
+
+        if (data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            categoryId: data[0].id,
+          }))
+        }
+      } catch (error) {
+        toast.error("Failed to load categories")
+        console.error("Category fetch error:", error)
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    if (open) {
+      loadCategories()
+    }
+  }, [open])
+
+  /* -------------------- Submit -------------------- */
+
+  const handleSubmit = async () => {
+    if (!formData.title.trim()) {
+      toast.error("Quiz title is required")
+      return
+    }
+
+    if (!formData.categoryId) {
+      toast.error("Please select a category")
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      await createQuiz({
+        title: formData.title,
+        description: formData.description,
+        difficulty: formData.difficulty,
+        status: formData.status,
+        categoryId: formData.categoryId,
+        timeLimit: formData.timeLimit
+      })
+
+      toast.success("Quiz created successfully")
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to create quiz"
+      )
+      console.error("Create quiz error:", error)
+    } finally {
+      setSaving(false)
+    }
   }
+
+  /* -------------------- UI -------------------- */
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{quiz ? "Edit Quiz" : "Create New Quiz"}</DialogTitle>
-          <DialogDescription>Fill in the quiz details below</DialogDescription>
+          <DialogTitle>Create New Quiz</DialogTitle>
+          <DialogDescription>
+            Fill in the quiz details below
+          </DialogDescription>
         </DialogHeader>
+
         <div className="grid gap-4 py-4">
+          {/* Title */}
           <div className="grid gap-2">
-            <Label htmlFor="title">Quiz Title</Label>
+            <Label>Quiz Title</Label>
             <Input
-              id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               placeholder="Enter quiz title"
+              disabled={saving}
             />
           </div>
+
+          {/* Description */}
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label>Description</Label>
             <Textarea
-              id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  description: e.target.value,
+                })
+              }
               placeholder="Enter quiz description"
               rows={3}
+              disabled={saving}
             />
           </div>
+
+          {/* Category + Difficulty + Time */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="grid gap-2">
-              <Label htmlFor="category">Category</Label>
+              <Label>Category</Label>
               <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                value={String(formData.categoryId)}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    categoryId: Number(value),
+                  })
+                }
+                disabled={loadingCategories}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue
+                    placeholder={
+                      loadingCategories
+                        ? "Loading categories..."
+                        : "Select category"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Programming">Programming</SelectItem>
-                  <SelectItem value="Design">Design</SelectItem>
-                  <SelectItem value="Database">Database</SelectItem>
-                  <SelectItem value="DevOps">DevOps</SelectItem>
+                  {categories.length === 0 ? (
+                    <SelectItem disabled value="0">
+                      No categories available
+                    </SelectItem>
+                  ) : (
+                    categories.map((cat) => (
+                      <SelectItem
+                        key={cat.id}
+                        value={String(cat.id)}
+                      >
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="difficulty">Difficulty</Label>
+              <Label>Difficulty</Label>
               <Select
                 value={formData.difficulty}
-                onValueChange={(value) => setFormData({ ...formData, difficulty: value })}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    difficulty: value as QuizDifficulty,
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Easy">Easy</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Hard">Hard</SelectItem>
+                  <SelectItem value="EASY">Easy</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HARD">Hard</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
+              <Label>Time Limit (minutes)</Label>
               <Input
-                id="timeLimit"
                 type="number"
-                value={formData.timeLimit}
-                onChange={(e) => setFormData({ ...formData, timeLimit: Number.parseInt(e.target.value) })}
                 min={5}
                 max={180}
+                value={formData.timeLimit}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    timeLimit: Number(e.target.value),
+                  })
+                }
               />
             </div>
           </div>
-           <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="InActive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+          {/* Status */}
+          <div className="grid gap-2">
+            <Label>Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  status: value as QuizStatus,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             Cancel
           </Button>
-          <Button onClick={() => handleSubmit()}>Publish</Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving ? "Saving..." : "Publish"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
