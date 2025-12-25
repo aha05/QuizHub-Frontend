@@ -22,7 +22,8 @@ import { AddQuizDialog } from "@/components/add-quiz-dialog"
 import { AddCategoryDialog } from "@/components/add-category-dialog"
 import { EditQuizDialog } from "@/components/edit-quiz-dialog"
 import { DeleteQuizDialog } from "@/components/delete-quiz-dialog"
-import { getQuiz, getCategory } from "@/services/quiz.service"
+import { getQuiz, getCategory, deleteQuiz } from "@/services/quiz.service"
+import axios from "axios"
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD"
 type Status = "ACTIVE" | "INACTIVE"
@@ -102,8 +103,14 @@ export function QuizManagement() {
     setSelectedQuiz(null)
   }
 
-  const handleDeleteQuiz = () => {
+  const handleDeleteQuiz = async () => {
     if (!selectedQuiz) return
+    try{
+      await deleteQuiz(selectedQuiz.id)
+      toast.success("Delete succeeded!")
+    } catch(error){
+        toast.error(error.message)
+    }
     setQuizzes(quizzes.filter((q) => q.id !== selectedQuiz.id))
     setDeleteDialogOpen(false)
     setSelectedQuiz(null)
