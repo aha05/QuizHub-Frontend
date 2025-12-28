@@ -1,25 +1,28 @@
 import api from "./api"
 
+export type Type = "SINGLE" | "MULTIPLE"
+
 export interface Option {
     id: number
     text: string
-    isCorrect: boolean
+    correct: boolean
+}
+
+export interface OptionPayload {
+    text: string
+    correct: boolean
 }
 
 export interface Question {
     id: number
     content: string
+    type: Type
     options: Option
 }
 
 export interface QuestionPayload {
-   content: string
+    content: string
     options: Option
-}
-
-export interface UpdateQuestionPayload {
-  content: string
-  options: Option
 }
 
 export const createQuestion = async (
@@ -36,7 +39,7 @@ export const getQuestion = async (quizId: number): Promise<Question[]> => {
 
 export const updateQuestion = async (
   questionId: number,
-  payload: UpdateQuestionPayload
+  payload: QuestionPayload
 ) => {
   const res = await api.put(`/question/${questionId}`, payload)
   return res.data
@@ -44,6 +47,32 @@ export const updateQuestion = async (
 
 export const deleteQuestion = async (questionId: number) => {
   const res = await api.delete(`/question/${questionId}`)
+  return res.data
+}
+
+export const createOption = async (
+  questionId: number,
+  payload: OptionPayload) => {
+  const res = await api.post<Option>(`/question/${questionId}/options`, payload)
+  return res.data
+}
+
+export const getOption = async (quizId: number): Promise<Option[]> => {
+  const res = await api.get<Option[]>(`/quiz/${quizId}/question`)
+  return res.data
+}
+
+export const updateOption = async (
+  questionId: number,
+  optionId: number,
+  payload: QuestionPayload
+) => {
+  const res = await api.put(`/question/${questionId}/option/${optionId}`, payload)
+  return res.data
+}
+
+export const deleteOption = async (questionId: number, optionId: number) => {
+  const res = await api.delete(`/question/${questionId}/option/${optionId}`)
   return res.data
 }
 

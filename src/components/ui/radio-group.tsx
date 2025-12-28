@@ -26,7 +26,7 @@ export function RadioGroupItem({ className, ...props }: RadioGroupItemProps) {
   return (
     <RadioGroupPrimitive.Item
       className={cn(
-        "relative flex items-center justify-center aspect-square size-4 rounded-full border border-input shadow-xs bg-input/30 text-primary focus-visible:border-ring focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+        "relative flex items-center justify-center aspect-square size-4 rounded-full border-2 border-muted-foreground border-input shadow-xs bg-input/30 text-primary focus-visible:border-ring focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 bg-muted",
         className
       )}
       data-slot="radio-group-item"

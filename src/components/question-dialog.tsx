@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,179 +19,298 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, X } from "lucide-react"
 
+import {
+  createQuestion,
+  updateQuestion,
+  createOption,
+  updateOption,
+  deleteOption,
+} from "@/services/question.service"
+
+/* ===================== TYPES ===================== */
+
 interface Option {
-  id: number
+  id?: number          // backend id (exists only for edit)
+  tempId: number       // frontend-only id
   text: string
-  isCorrect: boolean
+  correct: boolean
 }
 
 interface Question {
   id: number
-  text: string
-  type: "single" | "multiple"
+  content: string
+  type: "SINGLE" | "MULTIPLE"
   options: Option[]
 }
 
 interface QuestionDialogProps {
   open: boolean
+  quizId: number
+  question?: Question | null
   onOpenChange: (open: boolean) => void
-  question: Question | null
-  onSave: (question: { text: string; type: "single" | "multiple"; options: Option[] }) => void
+  onSave: () => void
 }
 
-export function QuestionDialog({ open, onOpenChange, question, onSave }: QuestionDialogProps) {
+/* ===================== COMPONENT ===================== */
+
+export function QuestionDialog({
+  open,
+  quizId,
+  question,
+  onOpenChange,
+  onSave,
+}: QuestionDialogProps) {
   const [questionText, setQuestionText] = useState("")
-  const [questionType, setQuestionType] = useState<"single" | "multiple">("single")
-  const [options, setOptions] = useState<Option[]>([
-    { id: 1, text: "", isCorrect: false },
-    { id: 2, text: "", isCorrect: false },
-  ])
+  const [questionType, setQuestionType] =
+    useState<"SINGLE" | "MULTIPLE">("SINGLE")
+  const [options, setOptions] = useState<Option[]>([])
+
+  /* ---------- INIT ---------- */
 
   useEffect(() => {
     if (question) {
-      setQuestionText(question.text)
+      setQuestionText(question.content)
       setQuestionType(question.type)
-      setOptions(question.options)
+      setOptions(
+        question.options.map((o, index) => ({
+          ...o,
+          tempId: index + 1,
+        }))
+      )
     } else {
-      setQuestionText("")
-      setQuestionType("single")
-      setOptions([
-        { id: 1, text: "", isCorrect: false },
-        { id: 2, text: "", isCorrect: false },
-      ])
+      resetForm()
     }
   }, [question])
 
+  const resetForm = () => {
+    setQuestionText("")
+    setQuestionType("SINGLE")
+    setOptions([
+      { tempId: 1, text: "", correct: false },
+      { tempId: 2, text: "", correct: false },
+    ])
+  }
+
+  /* ---------- OPTION HELPERS ---------- */
+
   const addOption = () => {
-    const newId = Math.max(...options.map((o) => o.id), 0) + 1
-    setOptions([...options, { id: newId, text: "", isCorrect: false }])
+    setOptions(prev => [
+      ...prev,
+      {
+        tempId: Math.max(...prev.map(o => o.tempId)) + 1,
+        text: "",
+        correct: false,
+      },
+    ])
   }
 
-  const removeOption = (id: number) => {
-    if (options.length > 2) {
-      setOptions(options.filter((o) => o.id !== id))
+  const removeOption = async (tempId: number) => {
+    if (options.length <= 2) return
+
+    const option = options.find(o => o.tempId === tempId)
+
+    // delete from backend if already exists
+    if (option?.id) {
+      await deleteOption(option.id)
     }
+
+    setOptions(prev => prev.filter(o => o.tempId !== tempId))
   }
 
-  const updateOptionText = (id: number, text: string) => {
-    setOptions(options.map((o) => (o.id === id ? { ...o, text } : o)))
+  const updateOptionText = (tempId: number, text: string) => {
+    setOptions(prev =>
+      prev.map(o => (o.tempId === tempId ? { ...o, text } : o))
+    )
   }
 
-  const toggleCorrect = (id: number) => {
-    if (questionType === "single") {
-      // Only one correct answer
-      setOptions(options.map((o) => ({ ...o, isCorrect: o.id === id })))
-    } else {
-      // Toggle multiple
-      setOptions(options.map((o) => (o.id === id ? { ...o, isCorrect: !o.isCorrect } : o)))
+  const toggleCorrect = (tempId: number) => {
+    setOptions(prev =>
+      questionType === "SINGLE"
+        ? prev.map(o => ({ ...o, correct: o.tempId === tempId }))
+        : prev.map(o =>
+            o.tempId === tempId
+              ? { ...o, correct: !o.correct }
+              : o
+          )
+    )
+  }
+
+  /* ---------- SUBMIT ---------- */
+
+  const handleSubmit = async () => {
+    if (!questionText.trim()) return alert("Question is required")
+    if (options.some(o => !o.text.trim())) return alert("Fill all options")
+    if (!options.some(o => o.correct))
+      return alert("Select at least one correct answer")
+
+    let questionId: number
+
+    /* ----- CREATE ----- */
+    if (!question) {
+      const created = await createQuestion(quizId, {
+        content: questionText,
+        type: questionType,
+      })
+
+      questionId = created.id
+
+      for (const o of options) {
+        await createOption(questionId, {
+          text: o.text,
+          correct: o.correct,
+        })
+      }
     }
-  }
 
-  const handleSubmit = () => {
-    if (!questionText.trim()) return alert("Please enter a question")
-    if (options.some((o) => !o.text.trim())) return alert("Please fill in all options")
-    if (!options.some((o) => o.isCorrect)) return alert("Please mark at least one correct answer")
+    /* ----- UPDATE ----- */
+    else {
+      questionId = question.id
 
-    onSave({ text: questionText, type: questionType, options })
+      await updateQuestion(questionId, {
+        content: questionText,
+        type: questionType,
+      })
+
+      for (const o of options) {
+        if (o.id) {
+          // existing option
+          await updateOption(questionId, o.id, {
+            text: o.text,
+            correct: o.correct,
+          })
+        } else {
+          // newly added option
+          await createOption(questionId, {
+            text: o.text,
+            correct: o.correct,
+          })
+        }
+      }
+    }
+
+    onSave()
     onOpenChange(false)
+    resetForm()
   }
+
+  /* ===================== UI ===================== */
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{question ? "Edit Question" : "Add New Question"}</DialogTitle>
-          <DialogDescription>Fill in the question details and options below</DialogDescription>
+          <DialogTitle>
+            {question ? "Edit Question" : "Add Question"}
+          </DialogTitle>
+          <DialogDescription>
+            Enter the question and its options
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
-          {/* Question Text */}
-          <div className="grid gap-2">
-            <Label htmlFor="question">Question Text</Label>
+        <div className="space-y-6">
+          {/* QUESTION */}
+          <div>
+            <Label className="mb-3">Question</Label>
             <Textarea
-              id="question"
-              value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              placeholder="Enter your question here"
               rows={3}
+              value={questionText}
+              onChange={e => setQuestionText(e.target.value)}
             />
           </div>
 
-          {/* Question Type */}
-          <div className="grid gap-2">
-            <Label>Question Type</Label>
-            <RadioGroup
-              value={questionType}
-              onValueChange={(value: "single" | "multiple") => setQuestionType(value)}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="single" id="single" />
-                <Label htmlFor="single" className="cursor-pointer font-normal">Single Choice</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="multiple" id="multiple" />
-                <Label htmlFor="multiple" className="cursor-pointer font-normal">Multiple Choice</Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {/* TYPE */}
+          <RadioGroup
+            value={questionType}
+            onValueChange={v =>
+              setQuestionType(v as "SINGLE" | "MULTIPLE")
+            }
+            className="flex gap-6"
+          >
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="SINGLE" />
+              <Label>Single Choice</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="MULTIPLE" />
+              <Label>Multiple Choice</Label>
+            </div>
+          </RadioGroup>
 
-          {/* Options */}
-          <div className="grid gap-3">
-            <div className="flex items-center justify-between">
-              <Label>Options (minimum 2 required)</Label>
-              <Button variant="outline" size="sm" onClick={addOption}>
-                <Plus className="mr-2 h-3 w-3" />
+          {/* OPTIONS */}
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <Label>Options</Label>
+              <Button size="sm" variant="outline" onClick={addOption}>
+                <Plus className="h-4 w-4 mr-1" />
                 Add Option
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {options.map((option, index) => (
-                <div key={option.id} className="flex items-start gap-2">
-                  {/* Correct selector */}
-                  <div className="flex items-center pt-3">
-                    {questionType === "single" ? (
-                      <RadioGroup
-                        value={options.find((o) => o.isCorrect)?.id.toString() || ""}
-                        onValueChange={(val) => toggleCorrect(Number(val))}
-                      >
-                        <RadioGroupItem value={option.id.toString()} />
-                      </RadioGroup>
-                    ) : (
-                      <Checkbox checked={option.isCorrect} onCheckedChange={() => toggleCorrect(option.id)} />
-                    )}
-                  </div>
-
-                  {/* Option text input */}
-                  <div className="flex-1 grid gap-2">
-                    <Label className="text-xs text-muted-foreground">Option {String.fromCharCode(65 + index)}</Label>
+            {/* SINGLE */}
+            {questionType === "SINGLE" && (
+              <RadioGroup
+                value={options.find(o => o.correct)?.tempId.toString()}
+                onValueChange={v => toggleCorrect(Number(v))}
+                className="space-y-2"
+              >
+                {options.map((o, i) => (
+                  <div key={o.tempId} className="flex items-center gap-2">
+                    <RadioGroupItem value={o.tempId.toString()} />
                     <Input
-                      value={option.text}
-                      onChange={(e) => updateOptionText(option.id, e.target.value)}
-                      placeholder={`Enter option ${String.fromCharCode(65 + index)}`}
+                      value={o.text}
+                      onChange={e =>
+                        updateOptionText(o.tempId, e.target.value)
+                      }
+                      placeholder={`Option ${String.fromCharCode(65 + i)}`}
                     />
-                  </div>
-
-                  {/* Remove button */}
-                  {options.length > 2 && (
-                    <Button variant="ghost" size="icon" className="mt-7" onClick={() => removeOption(option.id)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeOption(o.tempId)}
+                      disabled={options.length <= 2}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
-                  )}
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
+
+            {/* MULTIPLE */}
+            {questionType === "MULTIPLE" &&
+              options.map((o, i) => (
+                <div key={o.tempId} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={o.correct}
+                    onCheckedChange={() => toggleCorrect(o.tempId)}
+                  />
+                  <Input
+                    value={o.text}
+                    onChange={e =>
+                      updateOptionText(o.tempId, e.target.value)
+                    }
+                    placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeOption(o.tempId)}
+                    disabled={options.length <= 2}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              {questionType === "single" ? "Select the radio button next to the correct answer" : "Check all correct answers"}
-            </p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit}>Save Question</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit}>
+            {question ? "Update" : "Save"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

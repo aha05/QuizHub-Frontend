@@ -13,7 +13,7 @@ export default function AdminRoutes() {
       <Route element={<DashboardLayout />}>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/quizzes" element={<Quiz />} />
-        <Route path="/admin/quizzes/:id/questions" element={<Question />} />
+        <Route path="/admin/quizzes/:quizId/questions" element={<Question />} />
         <Route path="/admin/users" element={<User />} />
         <Route path="/admin/reports" element={<Report />} />
       </Route>

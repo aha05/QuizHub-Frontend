@@ -247,7 +247,7 @@ export function QuizManagement() {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => navigate(`/admin/quizzes/${quiz.id}/questions`)}>
-                            <FileQuestion className="mr-2 h-4 w-4" /> Add Question
+                            <FileQuestion className="mr-2 h-4 w-4" /> Questions
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {

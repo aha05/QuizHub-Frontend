@@ -1,118 +1,145 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { Link, useParams } from "react-router-dom"
+import toast from "react-hot-toast"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Pencil, Trash2, ArrowLeft, CheckCircle2, Circle } from "lucide-react"
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+} from "lucide-react"
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 import { QuestionDialog } from "@/components/question-dialog"
-import {Link, useParams } from "react-router-dom"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { getQuestion, deleteQuestion } from "@/services/question.service"
+
+interface Option {
+  id: number
+  text: string
+  correct: boolean
+}
 
 interface Question {
   id: number
-  text: string
+  content: string
   type: "single" | "multiple"
-  options: Array<{
-    id: number
-    text: string
-    isCorrect: boolean
-  }>
+  options: Option[]
 }
 
-// Mock data
-const mockQuestions: Question[] = [
-  {
-    id: 1,
-    text: "What is the correct syntax for referring to an external script called 'app.js'?",
-    type: "single",
-    options: [
-      { id: 1, text: "<script href='app.js'>", isCorrect: false },
-      { id: 2, text: "<script name='app.js'>", isCorrect: false },
-      { id: 3, text: "<script src='app.js'>", isCorrect: true },
-      { id: 4, text: "<script file='app.js'>", isCorrect: false },
-    ],
-  },
-  {
-    id: 2,
-    text: "Which of the following are JavaScript data types? (Select all that apply)",
-    type: "multiple",
-    options: [
-      { id: 1, text: "String", isCorrect: true },
-      { id: 2, text: "Number", isCorrect: true },
-      { id: 3, text: "Character", isCorrect: false },
-      { id: 4, text: "Boolean", isCorrect: true },
-      { id: 5, text: "Float", isCorrect: false },
-    ],
-  },
-  {
-    id: 3,
-    text: "How do you create a function in JavaScript?",
-    type: "single",
-    options: [
-      { id: 1, text: "function myFunction()", isCorrect: true },
-      { id: 2, text: "function:myFunction()", isCorrect: false },
-      { id: 3, text: "def myFunction()", isCorrect: false },
-      { id: 4, text: "create myFunction()", isCorrect: false },
-    ],
-  },
-]
-
 export function QuestionManager() {
-  const [questions, setQuestions] = useState<Question[]>(mockQuestions)
+  const { quizId } = useParams<{ quizId: string }>()
+
+  const [questions, setQuestions] = useState<Question[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
 
-  const handleEdit = (question: Question) => {
-    setEditingQuestion(question)
-    setDialogOpen(true)
-  }
+  /** Load questions */
+  useEffect(() => {
+    if (!quizId) return
+
+    const loadQuestions = async () => {
+      try {
+        const data = await getQuestion(Number(quizId))
+        console.log(data)
+        setQuestions(data)
+      } catch (error) {
+        toast.error("Failed to load questions")
+        console.error(error)
+      }
+    }
+
+    loadQuestions()
+  }, [quizId])
 
   const handleCreate = () => {
     setEditingQuestion(null)
     setDialogOpen(true)
   }
 
-  const handleDelete = (questionId: number) => {
-    setQuestions(questions.filter((q) => q.id !== questionId))
+  const handleEdit = (question: Question) => {
+    setEditingQuestion(question)
+    setDialogOpen(true)
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteQuestion(id)
+      setQuestions(prev => prev.filter(q => q.id !== id))
+      toast.success("Question deleted")
+    } catch (error) {
+      toast.error("Failed to delete question")
+    }
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/quizzes">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
+
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Question Management</h1>
-          <p className="text-muted-foreground">JavaScript Fundamentals Quiz</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Question Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage quiz questions and answers
+          </p>
         </div>
-        <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+
+        <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Add Question
         </Button>
       </div>
 
+      {/* Question List */}
       <Card>
         <CardHeader>
           <CardTitle>Questions ({questions.length})</CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
-          <Accordion type="single" collapsible className="w-full space-y-2">
+          {questions.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No questions added yet.
+            </p>
+          )}
+
+          <Accordion type="single" collapsible className="space-y-2">
             {questions.map((question, index) => (
-              <AccordionItem key={question.id} value={`question-${question.id}`} className="border rounded-lg px-4">
+              <AccordionItem
+                key={question.id}
+                value={`question-${question.id}`}
+                className="rounded-lg border px-4"
+              >
                 <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-start gap-4 text-left">
-                    <Badge variant="secondary" className="mt-1">
-                      Q{index + 1}
-                    </Badge>
+                  <div className="flex gap-4 text-left">
+                    <Badge variant="secondary">Q{index + 1}</Badge>
+
                     <div className="flex-1">
-                      <p className="font-medium">{question.text}</p>
+                      <p className="font-medium">{question.content}</p>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {question.type === "single" ? "Single Choice" : "Multiple Choice"}
+                          {question.type === "single"
+                            ? "Single Choice"
+                            : "Multiple Choice"}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           {question.options.length} Options
@@ -121,46 +148,63 @@ export function QuestionManager() {
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium text-muted-foreground">Options:</div>
-                    <div className="space-y-2">
-                      {question.options.map((option, optionIndex) => (
-                        <div
-                          key={option.id}
-                          className={`flex items-start gap-3 rounded-lg border p-3 ${
-                            option.isCorrect ? "border-accent bg-accent/10" : ""
-                          }`}
+
+                <AccordionContent className="pt-4 space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Options
+                  </p>
+
+                  {question.options.map((option, i) => (
+                    <div
+                      key={option.id}
+                      className={`flex items-start gap-3 rounded-lg border p-3 ${
+                        option.correct
+                          ? "border-accent bg-accent/10"
+                          : ""
+                      }`}
+                    >
+                      {option.correct ? (
+                        <CheckCircle2 className="h-5 w-5 text-accent" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground" />
+                      )}
+
+                      <div className="flex-1">
+                        <span className="mr-2 text-sm font-medium text-muted-foreground">
+                          {String.fromCharCode(65 + i)}.
+                        </span>
+                        {option.text}
+                      </div>
+
+                      {option.correct && (
+                        <Badge
+                          variant="outline"
+                          className="border-accent text-accent"
                         >
-                          {option.isCorrect ? (
-                            <CheckCircle2 className="h-5 w-5 mt-0.5 text-accent flex-shrink-0" />
-                          ) : (
-                            <Circle className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                          )}
-                          <div className="flex-1">
-                            <span className="text-sm font-medium text-muted-foreground mr-2">
-                              {String.fromCharCode(65 + optionIndex)}.
-                            </span>
-                            <span>{option.text}</span>
-                          </div>
-                          {option.isCorrect && (
-                            <Badge variant="outline" className="text-accent border-accent">
-                              Correct
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
+                          Correct
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex justify-end gap-2 pt-2 border-t">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(question)}>
-                        <Pencil className="mr-2 h-3 w-3" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(question.id)}>
-                        <Trash2 className="mr-2 h-3 w-3 text-destructive" />
-                        Delete
-                      </Button>
-                    </div>
+                  ))}
+
+                  <div className="flex justify-end gap-2 pt-3 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(question)}
+                    >
+                      <Pencil className="mr-2 h-3 w-3" />
+                      Edit
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(question.id)}
+                    >
+                      <Trash2 className="mr-2 h-3 w-3 text-destructive" />
+                      Delete
+                    </Button>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -169,7 +213,16 @@ export function QuestionManager() {
         </CardContent>
       </Card>
 
-      <QuestionDialog open={dialogOpen} onOpenChange={setDialogOpen} question={editingQuestion} />
+      {/* Dialog */}
+      <QuestionDialog
+        open={dialogOpen}
+        quizId={Number(quizId)}
+        question={editingQuestion}
+        onOpenChange={setDialogOpen}
+        onSave={() => {
+          setDialogOpen(false)
+        }}
+      />
     </div>
   )
 }
