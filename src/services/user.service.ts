@@ -1,0 +1,59 @@
+import api from "./api"
+
+export type Status = "ACTIVE" | "DISABLED"
+
+export interface User {
+    id: number
+    name: string
+    email: string
+    role: string
+    status: string
+}
+
+export interface UserPayload {
+    name: string
+    email: string
+    role: string
+    status: string
+}
+
+export interface UserStats {
+    userId: number
+    name: string
+    quizzesAttempted: number
+    highestScorePercentage: double
+}
+
+export const getUser = async (): Promise<User[]> => {
+  const res = await api.get<User[]>(`/users`)
+  return res.data
+}
+
+export const getUserStats = async (userId: number): Promise<UserStats> => {
+  const res = await api.get<UserStats>(`/user/${userId}/stats`)
+  return res.data
+}
+
+export const createUser = async (
+  payload: UserPayload) => {
+  const res = await api.post<User>(`/users`, payload)
+  return res.data
+}
+
+export const updateUser = async (
+  userId: number,
+  payload: UserPayload) => {
+  const res = await api.put<User>(`/users/${userId}}`, payload)
+  return res.data
+}
+
+export const updateUserStatus = async (userId: number, status: Status) =>{
+  console.log(status)
+  const res = await api.put(`/users/${userId}/status`, {status: status})
+  return res.data
+}
+
+export const deleteUser = async (userId: number) => {
+  const res = await api.delete(`/users/${userId}}`)
+  return res.data
+}
