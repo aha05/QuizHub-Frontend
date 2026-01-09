@@ -2,6 +2,8 @@ import api from "./api"
 
 export type Status = "ACTIVE" | "DISABLED"
 
+export type Role = "ADMIN" | "USER"
+
 export interface User {
     id: number
     name: string
@@ -47,9 +49,13 @@ export const updateUser = async (
   return res.data
 }
 
-export const updateUserStatus = async (userId: number, status: Status) =>{
-  console.log(status)
+export const updateUserStatus = async (userId: number, status: Status) => {
   const res = await api.put(`/users/${userId}/status`, {status: status})
+  return res.data
+}
+
+export const updateUserRole = async (userId: number, role: Role) => {
+  const res = await api.put(`/users/${userId}/role`, {role: role})
   return res.data
 }
 

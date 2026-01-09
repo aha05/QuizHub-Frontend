@@ -1,171 +1,195 @@
 "use client"
 
-import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import  {Card}  from "@/components/ui/Card"
-import  {Button}  from "@/components/ui/Button"
-import  {Badge}  from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Play, Clock, BookOpen, Brain, Code, Globe, Lightbulb, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
-const quizzes = [
-  {
-    id: 1,
-    title: "JavaScript Fundamentals",
-    description: "Test your knowledge of core JavaScript concepts and syntax",
-    questions: 15,
-    difficulty: "Easy",
-    category: "Programming",
-    icon: Code,
-    color: "text-chart-1",
-    bgColor: "bg-chart-1/10",
-  },
-  {
-    id: 2,
-    title: "World Geography",
-    description: "Explore capitals, countries, and continents around the world",
-    questions: 20,
-    difficulty: "Medium",
-    category: "Geography",
-    icon: Globe,
-    color: "text-chart-2",
-    bgColor: "bg-chart-2/10",
-  },
-  {
-    id: 3,
-    title: "Advanced React Patterns",
-    description: "Master hooks, context, and advanced React patterns",
-    questions: 12,
-    difficulty: "Hard",
-    category: "Programming",
-    icon: Zap,
-    color: "text-chart-4",
-    bgColor: "bg-chart-4/10",
-  },
-  {
-    id: 4,
-    title: "Science Trivia",
-    description: "Challenge yourself with questions from physics, chemistry, and biology",
-    questions: 25,
-    difficulty: "Medium",
-    category: "Science",
-    icon: Lightbulb,
-    color: "text-chart-3",
-    bgColor: "bg-chart-3/10",
-  },
-  {
-    id: 5,
-    title: "History 101",
-    description: "Journey through major historical events and figures",
-    questions: 18,
-    difficulty: "Easy",
-    category: "History",
-    icon: BookOpen,
-    color: "text-chart-5",
-    bgColor: "bg-chart-5/10",
-  },
-  {
-    id: 6,
-    title: "Brain Teasers",
-    description: "Mind-bending puzzles and logical reasoning challenges",
-    questions: 10,
-    difficulty: "Hard",
-    category: "Logic",
-    icon: Brain,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-]
+import { Card } from "@/components/ui/Card"
+import { Button } from "@/components/ui/Button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-const difficultyColors = {
-  Easy: "bg-chart-3/20 text-chart-3 border-chart-3/30",
-  Medium: "bg-chart-1/20 text-chart-1 border-chart-1/30",
-  Hard: "bg-destructive/20 text-destructive border-destructive/30",
+import {
+  Play,
+  Clock,
+  BookOpen,
+  Brain,
+  Code,
+  Globe,
+  Lightbulb,
+} from "lucide-react"
+
+import { getQuiz, getCategory } from "@/services/quiz.service"
+
+type Difficulty = "EASY" | "MEDIUM" | "HARD"
+
+interface Category {
+  id: number
+  name: string
+}
+
+interface Quiz {
+  id: string
+  title: string
+  description: string
+  questions: number
+  difficulty: Difficulty
+  category: Category
+}
+
+const difficultyColors: Record<Difficulty, string> = {
+  EASY: "bg-chart-3/20 text-chart-3 border-chart-3/30",
+  MEDIUM: "bg-chart-1/20 text-chart-1 border-chart-1/30",
+  HARD: "bg-destructive/20 text-destructive border-destructive/30",
+}
+
+const getCategoryStyle = (categoryName: string) => {
+  switch (categoryName) {
+    case "Programming":
+      return { icon: Code, color: "text-chart-1", bg: "bg-chart-1/10" }
+    case "Geography":
+      return { icon: Globe, color: "text-chart-2", bg: "bg-chart-2/10" }
+    case "Science":
+      return { icon: Lightbulb, color: "text-chart-3", bg: "bg-chart-3/10" }
+    case "History":
+      return { icon: BookOpen, color: "text-chart-5", bg: "bg-chart-5/10" }
+    case "Logic":
+      return { icon: Brain, color: "text-primary", bg: "bg-primary/10" }
+    default:
+      return { icon: BookOpen, color: "text-muted-foreground", bg: "bg-muted/10" }
+  }
 }
 
 export function QuizGrid() {
   const navigate = useNavigate()
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all")
+
+  const [quizzes, setQuizzes] = useState<Quiz[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [difficultyFilter, setDifficultyFilter] = useState("all")
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [quizData, categoryData] = await Promise.all([
+          getQuiz(),
+          getCategory(),
+        ])
+        setQuizzes(quizData)
+        setCategories(categoryData)
+      } catch (err) {
+        console.error("Failed to load quiz data", err)
+      }
+    }
+    loadData()
+  }, [])
 
   const filteredQuizzes = quizzes.filter((quiz) => {
-    const categoryMatch = categoryFilter === "all" || quiz.category === categoryFilter
-    const difficultyMatch = difficultyFilter === "all" || quiz.difficulty === difficultyFilter
+    const categoryMatch =
+      categoryFilter === "all" || quiz.category.name === categoryFilter
+
+    const difficultyMatch =
+      difficultyFilter === "all" || quiz.difficulty === difficultyFilter
+
     return categoryMatch && difficultyMatch
   })
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-        <h2 className="text-2xl font-bold text-balance">Available Quizzes</h2>
+        <h2 className="text-2xl font-bold">Available Quizzes</h2>
+
         <div className="flex gap-3 flex-wrap">
+          {/* Category Filter */}
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[180px] border-border/50">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="Programming">Programming</SelectItem>
-              <SelectItem value="Geography">Geography</SelectItem>
-              <SelectItem value="Science">Science</SelectItem>
-              <SelectItem value="History">History</SelectItem>
-              <SelectItem value="Logic">Logic</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.name}>
+                  {cat.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
           <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-            <SelectTrigger className="w-[180px] border-border/50">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Difficulties</SelectItem>
-              <SelectItem value="Easy">Easy</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="Hard">Hard</SelectItem>
+              <SelectItem value="EASY">Easy</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HARD">Hard</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredQuizzes.map((quiz) => (
-          <Card
-            key={quiz.id}
-            className="p-6 border-border/50 bg-card/50 backdrop-blur hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5 group"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className={`${quiz.bgColor} ${quiz.color} p-3 rounded-lg`}>
-                <quiz.icon className="h-6 w-6" />
-              </div>
-              <Badge variant="secondary" className={difficultyColors[quiz.difficulty as keyof typeof difficultyColors]}>
-                {quiz.difficulty}
-              </Badge>
-            </div>
-            <h3 className="text-xl font-bold mb-2 text-balance group-hover:text-primary transition-colors">
-              {quiz.title}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4 text-pretty leading-relaxed">{quiz.description}</p>
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{quiz.questions} questions</span>
-              </div>
-              <Badge variant="outline" className="border-border/50">
-                {quiz.category}
-              </Badge>
-            </div>
-            <Button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
-              onClick={() => navigate('/quiz')}
+        {filteredQuizzes.map((quiz) => {
+          const { icon: Icon, color, bg } = getCategoryStyle(
+            quiz.category.name
+          )
+
+          return (
+            <Card
+              key={quiz.id}
+              className="p-6 border-border/50 hover:shadow-lg transition-all group"
             >
-              <Play className="h-4 w-4" />
-               Start Quiz
-            </Button>
-          </Card>
-        ))}
+              <div className="flex items-start justify-between mb-4">
+                <div className={`${bg} ${color} p-3 rounded-lg`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+
+                <Badge
+                  variant="secondary"
+                  className={difficultyColors[quiz.difficulty]}
+                >
+                  {quiz.difficulty}
+                </Badge>
+              </div>
+
+              <h3 className="text-xl font-bold mb-2 group-hover:text-primary">
+                {quiz.title}
+              </h3>
+
+              <p className="text-sm text-muted-foreground mb-4">
+                {quiz.description}
+              </p>
+
+              <div className="flex items-center justify-between text-sm mb-4">
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  {quiz.questions} questions
+                </div>
+
+                <Badge variant="outline">{quiz.category.name}</Badge>
+              </div>
+
+              <Button
+                className="w-full flex gap-2"
+                onClick={() => navigate(`/quiz/${quiz.id}`)}
+              >
+                <Play className="h-4 w-4" />
+                Start Quiz
+              </Button>
+            </Card>
+          )
+        })}
       </div>
 
       {filteredQuizzes.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">No quizzes found matching your filters.</p>
+        <div className="text-center py-12 text-muted-foreground">
+          No quizzes found matching your filters.
         </div>
       )}
     </div>

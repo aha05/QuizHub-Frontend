@@ -53,6 +53,11 @@ export const getQuiz = async (): Promise<Quiz[]> => {
   return res.data
 }
 
+export const getQuizById = async (quizId: number): Promise<Quiz[]> => {
+  const res = await api.get<Quiz[]>(`/quiz/${quizId}`)
+  return res.data
+}
+
 export const updateQuiz = async (
   quizId: number,
   payload: UpdateQuizPayload

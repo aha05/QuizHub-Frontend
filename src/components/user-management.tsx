@@ -36,7 +36,7 @@ import {
 
 /* ---------------- TYPES ---------------- */
 
-type UserRole = "ADMIN" | "MANAGER" | "USER"
+type UserRole = "ADMIN" | "USER"
 type UserStatus = "ACTIVE" | "DISABLED"
 
 interface User {
@@ -150,8 +150,6 @@ export function UserManagement() {
   const getRoleColor = (role: UserRole) =>
     role === "ADMIN"
       ? "bg-destructive/20 text-destructive"
-      : role === "MANAGER"
-      ? "bg-chart-1/20 text-chart-1"
       : "bg-muted text-muted-foreground"
 
   const getStatusColor = (status: UserStatus) =>
@@ -207,7 +205,6 @@ export function UserManagement() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="ADMIN">Admin</SelectItem>
-              <SelectItem value="MANAGER">Manager</SelectItem>
               <SelectItem value="USER">User</SelectItem>
             </SelectContent>
           </Select>

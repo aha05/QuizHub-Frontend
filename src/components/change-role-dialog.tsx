@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -11,28 +11,65 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Shield } from "lucide-react"
+import toast from "react-hot-toast"
+import { updateUserRole } from "@/services/user.service"
 
 interface User {
   id: string
   name: string
   email: string
-  role: "Admin" | "Manager" | "Regular"
+  role: "ADMIN" | "USER"
 }
 
 interface ChangeRoleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   user: User
-  onChangeRole: (newRole: "Admin" | "Manager" | "Regular") => void
+  onChangeRole: (newRole: "ADMIN" | "USER") => void
 }
 
-export function ChangeRoleDialog({ open, onOpenChange, user, onChangeRole }: ChangeRoleDialogProps) {
-  const [selectedRole, setSelectedRole] = useState(user.role)
+export function ChangeRoleDialog({
+  open,
+  onOpenChange,
+  user,
+  onChangeRole,
+}: ChangeRoleDialogProps) {
+  const [selectedRole, setSelectedRole] = useState<"ADMIN" | "USER">(user.role)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = () => {
-    onChangeRole(selectedRole)
+  // Sync role when dialog opens or user changes
+  useEffect(() => {
+    if (open) {
+      setSelectedRole(user.role)
+    }
+  }, [open, user.role])
+
+  const handleSubmit = async () => {
+    if (selectedRole === user.role) {
+      toast.error("No role change detected")
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      await updateUserRole(user.id, selectedRole)
+
+      toast.success("User role updated successfully")
+      onOpenChange(false)
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update user role")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -46,41 +83,43 @@ export function ChangeRoleDialog({ open, onOpenChange, user, onChangeRole }: Cha
             <DialogTitle>Change User Role</DialogTitle>
           </div>
           <DialogDescription className="pt-2">
-            Update the role for <span className="font-semibold text-foreground">{user.name}</span>
+            Update the role for{" "}
+            <span className="font-semibold text-foreground">
+              {user.name}
+            </span>
           </DialogDescription>
         </DialogHeader>
+
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as "Admin" | "Manager" | "Regular")}>
+            <Label>Role</Label>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) =>
+                setSelectedRole(value as "ADMIN" | "USER")
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Manager">Manager</SelectItem>
-                <SelectItem value="Regular">Regular</SelectItem>
+                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="USER">User</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
           <div className="rounded-lg border border-border bg-muted/50 p-3 text-sm">
-            <p className="font-medium mb-2">Role Permissions:</p>
+            <p className="mb-2 font-medium">Role Permissions:</p>
             <ul className="space-y-1 text-muted-foreground">
-              {selectedRole === "Admin" && (
+              {selectedRole === "ADMIN" && (
                 <>
                   <li>• Full access to all features</li>
                   <li>• Manage users and roles</li>
                   <li>• Create and delete quizzes</li>
                 </>
               )}
-              {selectedRole === "Manager" && (
-                <>
-                  <li>• Create and edit quizzes</li>
-                  <li>• View user statistics</li>
-                  <li>• Generate reports</li>
-                </>
-              )}
-              {selectedRole === "Regular" && (
+              {selectedRole === "USER" && (
                 <>
                   <li>• Take quizzes</li>
                   <li>• View own statistics</li>
@@ -90,11 +129,18 @@ export function ChangeRoleDialog({ open, onOpenChange, user, onChangeRole }: Cha
             </ul>
           </div>
         </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Update Role</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? "Updating..." : "Update Role"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
