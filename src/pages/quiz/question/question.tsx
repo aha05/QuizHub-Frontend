@@ -1,81 +1,79 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
 import { QuizQuestion } from "@/components/quiz-question"
 import { QuizResultModal } from "@/components/quiz-result-modal"
 import { Clock, CheckCircle2 } from "lucide-react"
+import { getQuestion } from "@/services/question.service"
+import { getQuizById, submitQuiz } from "@/services/quiz.service"
+import toast from "react-hot-toast"
 
-// Dummy quiz data
-const quizData = [
-  {
-    id: 1,
-    question: "What is the capital of France?",
-    options: ["London", "Paris", "Berlin", "Madrid"],
-    correctAnswer: 1,
-  },
-  {
-    id: 2,
-    question: "Which planet is known as the Red Planet?",
-    options: ["Venus", "Mars", "Jupiter", "Saturn"],
-    correctAnswer: 1,
-  },
-  {
-    id: 3,
-    question: "What is the largest ocean on Earth?",
-    options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
-    correctAnswer: 3,
-  },
-  {
-    id: 4,
-    question: "Who painted the Mona Lisa?",
-    options: ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Michelangelo"],
-    correctAnswer: 1,
-  },
-  {
-    id: 5,
-    question: "What is the smallest country in the world?",
-    options: ["Monaco", "Vatican City", "San Marino", "Liechtenstein"],
-    correctAnswer: 1,
-  },
-  {
-    id: 6,
-    question: "Which programming language is known as the language of the web?",
-    options: ["Python", "Java", "JavaScript", "C++"],
-    correctAnswer: 2,
-  },
-  {
-    id: 7,
-    question: "What is the chemical symbol for gold?",
-    options: ["Go", "Gd", "Au", "Ag"],
-    correctAnswer: 2,
-  },
-  {
-    id: 8,
-    question: "How many continents are there?",
-    options: ["5", "6", "7", "8"],
-    correctAnswer: 2,
-  },
-  {
-    id: 9,
-    question: "What is the fastest land animal?",
-    options: ["Lion", "Cheetah", "Leopard", "Tiger"],
-    correctAnswer: 1,
-  },
-  {
-    id: 10,
-    question: "Which country is home to the kangaroo?",
-    options: ["New Zealand", "South Africa", "Australia", "Brazil"],
-    correctAnswer: 2,
-  },
-]
+
+export type Type = "SINGLE" | "MULTIPLE"
+
+interface Quiz {
+  id: number
+  timeLimit: number // minutes
+  passPercentage: number
+}
+
+interface Option {
+  id: number
+  text: string
+  correct: boolean
+}
+
+interface Question {
+  id: number
+  content: string
+  type: Type
+  options: Option[]
+}
+
+interface SubmitAnswerPayload {
+  userId: number
+  timeTaken: number
+  answers: {
+    questionId: number
+    selectedOptionIds: number[]
+  }[]
+}
 
 export default function QuestionPage() {
+  const { quizId } = useParams<{ quizId: string }>()
+  const [quiz, setQuiz] = useState<Quiz | null>(null)
+  const [questions, setQuestions] = useState<Question[]>([])
+
   const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [answers, setAnswers] = useState<(number | null)[]>(Array(quizData.length).fill(null))
+  const [answers, setAnswers] = useState<(number | null)[]>(Array(questions.length).fill(null))
   const [timeRemaining, setTimeRemaining] = useState(600) // 10 minutes in seconds
   const [isQuizComplete, setIsQuizComplete] = useState(false)
   const [startTime] = useState(Date.now())
   const [timeTaken, setTimeTaken] = useState(0)
+
+    useEffect(() => {
+      if (!quizId) return
+  
+      const loadQuiz = async () => {
+        try {
+          const [questionData, quizData] = await Promise.all([
+            getQuestion(Number(quizId)),
+            getQuizById(Number(quizId)),
+          ])
+          setQuestions(questionData)
+          setQuiz(quizData)
+          setAnswers(new Array(questionData.length).fill(null))
+          setTimeRemaining(quizData.timeLimit * 60)
+        } catch (err) {
+          console.error("Failed to load quiz", err)
+        } finally {
+          setLoading(false)
+        }
+      }
+  
+      loadQuiz()
+    }, [quizId])
 
   // Timer countdown
   useEffect(() => {
@@ -104,9 +102,7 @@ export default function QuestionPage() {
   }
 
   const handleNext = () => {
-    if (currentQuestion < quizData.length - 1) {
-      setCurrentQuestion(currentQuestion + 1)
-    }
+    if (currentQuestion < questions.length - 1) setCurrentQuestion(currentQuestion + 1)
   }
 
   const handlePrevious = () => {
@@ -115,27 +111,56 @@ export default function QuestionPage() {
     }
   }
 
-  const handleSubmit = () => {
-    const endTime = Date.now()
-    const totalTime = Math.floor((endTime - startTime) / 1000)
-    setTimeTaken(totalTime)
-    setIsQuizComplete(true)
+  const handleSubmit = async () => {
+     const unanswered = answers.findIndex((ans) => ans === null)
+
+    if (timeRemaining <= 0) {
+      toast.error("Time is up!")
+      return
+    }
+
+    if (unanswered !== -1) {
+      toast.error("Please answer all questions")
+      setCurrentQuestion(unanswered) // optionally jump to first unanswered question
+      return
+    }
+
+    const totalTime = Math.floor((Date.now() - startTime) / 1000)
+
+     const payload: SubmitAnswerPayload = {
+      userId: 2, // TODO: replace with auth user
+      timeTaken: totalTime,
+      answers: questions.map((q, index) => {
+        const selectedIndex = answers[index]!
+        return {
+          questionId: q.id,
+          selectedOptionIds: [q.options[selectedIndex].id],
+        }
+      }),
+    }
+
+    try {
+      await submitQuiz(Number(quizId), payload)
+      setTimeTaken(totalTime)
+      setIsQuizComplete(true)
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to submit quiz")
+    }
   }
 
   const calculateScore = () => {
     let correct = 0
     answers.forEach((answer, index) => {
-      if (answer === quizData[index].correctAnswer) {
-        correct++
-      }
+      if (answer !== null && questions[index].options[answer]?.correct) correct++
     })
     return correct
   }
 
   const handleRetry = () => {
     setCurrentQuestion(0)
-    setAnswers(Array(quizData.length).fill(null))
-    setTimeRemaining(600)
+    setAnswers(new Array(questions.length).fill(null))
+    setTimeRemaining(quiz?.timeLimit! * 60)
     setIsQuizComplete(false)
   }
 
@@ -164,7 +189,7 @@ export default function QuestionPage() {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-accent" />
               <span className="text-muted-foreground">
-                Answered <span className="text-foreground font-semibold">{answeredCount}</span> / {quizData.length}
+                Answered <span className="text-foreground font-semibold">{answeredCount}</span> / {questions.length}
               </span>
             </div>
           </div>
@@ -174,24 +199,25 @@ export default function QuestionPage() {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-muted-foreground">Progress</span>
               <span className="text-sm text-foreground font-medium">
-                {Math.round((answeredCount / quizData.length) * 100)}%
+                {Math.round((answeredCount / questions.length) * 100)}%
               </span>
             </div>
             <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300 ease-out"
-                style={{ width: `${(answeredCount / quizData.length) * 100}%` }}
+                style={{ width: `${(answeredCount / questions.length) * 100}%` }}
               />
             </div>
           </div>
 
           {/* Question */}
           <QuizQuestion
-            question={quizData[currentQuestion]}
+            question={questions[currentQuestion]}
             questionNumber={currentQuestion + 1}
-            totalQuestions={quizData.length}
+            totalQuestions={questions.length}
             selectedAnswer={answers[currentQuestion]}
             onAnswerSelect={handleAnswerSelect}
+            disabled={timeRemaining <= 0}
           />
 
           {/* Navigation */}
@@ -199,14 +225,16 @@ export default function QuestionPage() {
             <button
               onClick={handlePrevious}
               disabled={currentQuestion === 0}
+              disabled={timeRemaining <= 0}
               className="px-6 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Previous
             </button>
 
-            {currentQuestion === quizData.length - 1 ? (
+            {currentQuestion === questions.length - 1 ? (
               <button
                 onClick={handleSubmit}
+                disabled={timeRemaining <= 0}
                 className="px-8 py-2.5 rounded-lg bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 transition-opacity font-semibold shadow-lg"
               >
                 Submit Quiz
@@ -214,6 +242,7 @@ export default function QuestionPage() {
             ) : (
               <button
                 onClick={handleNext}
+                disabled={timeRemaining <= 0}
                 className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
               >
                 Next
@@ -226,9 +255,10 @@ export default function QuestionPage() {
         <div className="mt-6 bg-card rounded-xl border border-border shadow-lg p-4">
           <p className="text-sm text-muted-foreground mb-3">Quick Navigation</p>
           <div className="flex flex-wrap gap-2">
-            {quizData.map((_, index) => (
+            {questions.map((_, index) => (
               <button
                 key={index}
+                disabled={timeRemaining <= 0}
                 onClick={() => setCurrentQuestion(index)}
                 className={`w-10 h-10 rounded-lg font-medium transition-all ${
                   currentQuestion === index
@@ -249,8 +279,9 @@ export default function QuestionPage() {
       {isQuizComplete && (
         <QuizResultModal
           score={calculateScore()}
-          totalQuestions={quizData.length}
+          totalQuestions={questions.length}
           timeTaken={timeTaken}
+          passPercentage={quiz.passPercentage}
           onRetry={handleRetry}
         />
       )}

@@ -23,6 +23,7 @@ export interface Quiz {
     status: Status
     questions: number
     timeLimit: number
+    passPercentage: number
 }
 
 export interface QuizPayload {
@@ -32,6 +33,7 @@ export interface QuizPayload {
     status: Status
     categoryId: number
     timeLimit: number
+    passPercentage: number
 }
 
 export interface UpdateQuizPayload {
@@ -41,7 +43,21 @@ export interface UpdateQuizPayload {
   difficulty: Difficulty
   status: Status
   timeLimit: number
+  passPercentage: number
 }
+
+interface SubmitAnswer {
+  userId: number
+  timeTaken: number
+  answers: [
+    {
+      questionId: number
+      selectedOptionIds: number[]
+    }
+  ]
+}
+
+
 
 export const createQuiz = async (payload: QuizPayload) => {
   const res = await api.post<Quiz>("/quiz", payload)
@@ -62,6 +78,7 @@ export const updateQuiz = async (
   quizId: number,
   payload: UpdateQuizPayload
 ) => {
+  console.log(payload);
   const res = await api.put(`/quiz/${quizId}`, payload)
   return res.data
 }
@@ -78,6 +95,16 @@ export const createCategory = async (payload: CategoryPayload) => {
 
 export const getCategory = async (): Promise<Category[]> => {
   const res = await api.get<Category[]>("/quiz/category")
+  return res.data
+}
+
+export const submitQuiz = async (
+  quizId: number,
+  payload: SubmitAnswer
+) => {
+  console.log(payload)
+  const res = await api.post(`/quiz/${quizId}/submit`, payload)
+  console.log(res.data)
   return res.data
 }
 

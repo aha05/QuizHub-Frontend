@@ -7,18 +7,25 @@ interface QuizResultModalProps {
   score: number
   totalQuestions: number
   timeTaken: number
+  passPercentage: number
   onRetry: () => void
 }
 
-export function QuizResultModal({ score, totalQuestions, timeTaken, onRetry }: QuizResultModalProps) {
+export function QuizResultModal({ score, totalQuestions, timeTaken, passPercentage, onRetry }: QuizResultModalProps) {
   const percentage = Math.round((score / totalQuestions) * 100)
-  const isPassed = percentage >= 70
+  const isPassed = percentage >= (passPercentage ?? 70)
   const incorrectAnswers = totalQuestions - score
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}m ${secs}s`
+  }
+
+  const getText = (percentage: number) =>{
+    if(percentage >= 60)
+      return "Almost there!"
+    return "Keep Practicing!"
   }
 
   return (
@@ -39,13 +46,17 @@ export function QuizResultModal({ score, totalQuestions, timeTaken, onRetry }: Q
 
         {/* Title */}
         <div className="text-center mb-4">
-          <h2 className="text-2xl font-bold text-foreground mb-1">
-            {isPassed ? "Congratulations!" : "Keep Practicing!"}
-          </h2>
-          <p className="text-muted-foreground">
-            {isPassed ? "You've successfully completed the quiz" : "You need more practice to pass this quiz"}
-          </p>
+            <h2 className="text-2xl font-bold text-foreground mb-1">
+              {isPassed ? "Passed!" : getText((percentage))}
+              
+            </h2>
+            <p className="text-muted-foreground">
+              {isPassed 
+                ? `You answered ${score} out of ${totalQuestions} questions correctly (${percentage}%). Keep up the great work and continue challenging yourself!` 
+                : `You answered ${score} out of ${totalQuestions} questions correctly (${percentage}%). Review the questions you missed and try again to improve your score!`}
+            </p>
         </div>
+
 
         {/* Score */}
         <div className="bg-secondary rounded-xl p-4 mb-4 text-center">

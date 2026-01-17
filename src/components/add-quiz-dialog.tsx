@@ -54,6 +54,7 @@ export function AddQuizDialog({
     difficulty: "EASY" as QuizDifficulty,
     status: "ACTIVE" as QuizStatus,
     timeLimit: 15,
+    passPercentage: 70,
   })
 
   const [saving, setSaving] = useState(false)
@@ -108,7 +109,8 @@ export function AddQuizDialog({
         difficulty: formData.difficulty,
         status: formData.status,
         categoryId: formData.categoryId,
-        timeLimit: formData.timeLimit
+        timeLimit: formData.timeLimit,
+        passPercentage: formData.passPercentage
       })
 
       toast.success("Quiz created successfully")
@@ -234,7 +236,7 @@ export function AddQuizDialog({
               <Label>Time Limit (minutes)</Label>
               <Input
                 type="number"
-                min={5}
+                min={1}
                 max={180}
                 value={formData.timeLimit}
                 onChange={(e) =>
@@ -248,25 +250,42 @@ export function AddQuizDialog({
           </div>
 
           {/* Status */}
-          <div className="grid gap-2">
-            <Label>Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) =>
-                setFormData({
-                  ...formData,
-                  status: value as QuizStatus,
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-2">
+              <Label>Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    status: value as QuizStatus,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+                <Label>Pass Percentage</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={formData.passPercentage}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      passPercentage: Number(e.target.value),
+                    })
+                  }
+                />
+            </div>
           </div>
         </div>
 

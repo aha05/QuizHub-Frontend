@@ -39,6 +39,7 @@ interface Quiz {
   difficulty: Difficulty
   status: Status
   timeLimit: number
+  passPercentage: number
 }
 
 interface Props {
@@ -63,7 +64,8 @@ export function EditQuizDialog({
     categoryId: 0,
     difficulty: "EASY" as Difficulty,
     status: "ACTIVE" as Status,
-    timeLimit: 30,
+    timeLimit: 1,
+    passPercentage: 70,
   })
 
   /* 🔹 Load categories when dialog opens */
@@ -94,6 +96,7 @@ export function EditQuizDialog({
       difficulty: quiz.difficulty,
       status: quiz.status,
       timeLimit: quiz.timeLimit,
+      passPercentage: quiz.passPercentage
     })
   }, [quiz, categories])
 
@@ -110,6 +113,7 @@ export function EditQuizDialog({
         difficulty: form.difficulty,
         status: form.status,
         timeLimit: form.timeLimit,
+        passPercentage: form.passPercentage
       })
 
       toast.success("Quiz updated successfully")
@@ -205,7 +209,7 @@ export function EditQuizDialog({
               <Label>Time Limit (minutes)</Label>
               <Input
                 type="number"
-                min={5}
+                min={1}
                 max={180}
                 value={form.timeLimit}
                 onChange={(e) =>
@@ -219,23 +223,41 @@ export function EditQuizDialog({
           </div>
 
           {/* Status */}
-          <div className="grid gap-2">
-            <Label>Status</Label>
-            <Select
-              value={form.status}
-              onValueChange={(v) =>
-                setForm({ ...form, status: v as Status })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-2">
+              <Label>Status</Label>
+              <Select
+                value={form.status}
+                onValueChange={(v) =>
+                  setForm({ ...form, status: v as Status })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+                <Label>Pass Percentage</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={form.passPercentage}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      passPercentage: Number(e.target.value),
+                    })
+                  }
+                />
+            </div>
           </div>
+
         </div>
 
         <DialogFooter>

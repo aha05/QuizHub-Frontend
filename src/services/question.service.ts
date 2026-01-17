@@ -33,7 +33,7 @@ export const createQuestion = async (
 }
 
 export const getQuestion = async (quizId: number): Promise<Question[]> => {
-  const res = await api.get<Question[]>(`/quiz/${quizId}/question`)
+  const res = await api.get<Question[]>(`/quiz/${quizId}/questions`)
   return res.data
 }
 
