@@ -12,29 +12,47 @@ export interface History {
    submittedAt: string 
 }
 
-interface QuizHistory {
-  timeTaken: number
-  answers: {
-    questionId: number
-    selectedOptionIds: number[]
-  }[]
+export interface Leaderboard {
+    userId: number
+    username: string
+    score: number
+    quizzesAttempted: number
+    rank: number
+}
+
+export interface UserActivity {
+    name: string
+    level: string
+    totalQuizzes: number
+    completed: number
+    badges: string[]
+    highestScorePercentage: number
+    leaderboard: number
+    averageScore: number
 }
 
 export const getHistory = async (): Promise<History[]> => {
   const res = await api.get<History[]>(`/user-activity/history`)
-  console.log(res.data)
   return res.data
 }
 
-export const getHistoryById = async (quizId: number): Promise<History[]> => {
-  const res = await api.get<History[]>(`/quiz/quizResult/${quizId}`)
-  console.log(res.data)
+export const getLeaderboard = async (): Promise<Leaderboard[]> => {
+  const res = await api.get<Leaderboard[]>(`/user-activity/leaderboard`)
+  return res.data
+}
+
+export const getHistoryById = async (id: number): Promise<History[]> => {
+  const res = await api.get<History[]>(`/quiz/quizResult/${id}`)
   return res.data
 }
 
 export const getBestScore = async (quizId: number): Promise<History[]> => {
   const res = await api.get<History[]>(`/quiz/${quizId}/bestResult`)
-  console.log(res.data)
+  return res.data
+}
+
+export const getUserActivity = async (): Promise<UserActivity> => {
+  const res = await api.get<UserActivity>(`/user-activity`)
   return res.data
 }
 

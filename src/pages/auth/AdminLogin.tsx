@@ -74,7 +74,7 @@ export default function AuthPage() {
             email: email,
             password: password,
           })
-          navigate("/")
+          navigate("/admin")
 
         } catch (error) {
           toast.error(error?.message || "Register failed")

@@ -1,4 +1,4 @@
-import ProtectedRoute from "./protected.route"
+import ProtectedRoute from "./admin.protected.route"
 import {DashboardLayout} from "@/components/dashboard-layout"
 import Dashboard from "@/pages/admin/Dashboard"
 import Quiz from "@/pages/admin/Quiz"

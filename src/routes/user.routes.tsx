@@ -15,7 +15,7 @@ export default function UserRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/quiz/:quizId" element={<QuizPage />} />
         <Route path="/quiz/:quizId/questions" element={<QuestionPage />} />
-        <Route path="/quiz/:quizId/history" element={<ReviewQuestionPage/>} />
+        <Route path="/quiz/:quizId/history/:id" element={<ReviewQuestionPage/>} />
         <Route path="/history" element={<History />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
     </Route>

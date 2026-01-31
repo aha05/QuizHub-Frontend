@@ -1,26 +1,36 @@
 "use client"
 
-import * as React from "react"
+import { useState, useEffect } from "react"
 import { Trophy } from "lucide-react"
+import { getLeaderboard } from "@/services/activity.service"
 
-type LeaderboardItem = {
-  id: number
-  username: string
-  score: number
-  quizzesCompleted: number
-  rank: number
+export interface Leaderboard {
+    userId: number
+    username: string
+    score: number
+    quizzesAttempted: number
+    rank: number
 }
 
-// Dummy leaderboard data
-const leaderboardData: LeaderboardItem[] = [
-  { id: 1, username: "JohnDoe", score: 320, quizzesCompleted: 12, rank: 1 },
-  { id: 2, username: "JaneSmith", score: 290, quizzesCompleted: 10, rank: 2 },
-  { id: 3, username: "AlexBrown", score: 270, quizzesCompleted: 9, rank: 3 },
-  { id: 4, username: "SamGreen", score: 250, quizzesCompleted: 8, rank: 4 },
-  { id: 5, username: "LilyWhite", score: 220, quizzesCompleted: 7, rank: 5 },
-]
-
 export function LeaderboardTable() {
+  const [leaderboard, setLeaderboard] = useState<Leaderboard[]>([])
+
+  useEffect(() => {
+    
+        const loadLeaderboard = async () => {
+          try {
+            const leaderboardData = await getLeaderboard()
+            setLeaderboard(leaderboardData)
+          } catch (err) {
+            console.error("Failed to load quiz", err)
+          } finally {
+            setLoading(false)
+          }
+        }
+    
+        loadLeaderboard()
+      }, []) 
+
   return (
     <div className="overflow-x-auto">
       <h2 className="text-2xl font-bold text-balance mb-4">Leaderboard</h2>
@@ -34,9 +44,9 @@ export function LeaderboardTable() {
           </tr>
         </thead>
         <tbody>
-          {leaderboardData.map((user) => (
+          {leaderboard.map((user) => (
             <tr
-              key={user.id}
+
               className={`${
                 user.rank === 1 ? "" : "bg-card/50"
               } hover:bg-primary/10 transition-colors`}
@@ -47,7 +57,7 @@ export function LeaderboardTable() {
               </td>
               <td className="px-4 py-2 border border-border/50">{user.username}</td>
               <td className="px-4 py-2 border border-border/50">{user.score}</td>
-              <td className="px-4 py-2 border border-border/50">{user.quizzesCompleted}</td>
+              <td className="px-4 py-2 border border-border/50">{user.quizzesAttempted}</td>
             </tr>
           ))}
         </tbody>

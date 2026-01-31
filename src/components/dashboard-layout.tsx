@@ -1,7 +1,8 @@
-import React, { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
-import { logout } from "@/services/auth.service"
+import { adminLogout } from "@/services/auth.service"
+import { getCurrentUser } from "@/services/user.service"
 import { Outlet } from "react-router-dom"
 
 import {
@@ -38,6 +39,37 @@ const navigation = [
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await getCurrentUser()
+        setUser(userData)
+      } catch (err) {
+        console.error("Failed to load user", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUser()
+  }, [])
+
+  const capitalizeName = (name: string) =>
+    name
+      .split(" ")
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ")
+
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map(w => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -96,12 +128,12 @@ export function DashboardLayout() {
                 <button className="flex w-full items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/avatar.png" />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarFallback>{user?.name ? getInitials(user?.name):""}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 text-left text-sm">
-                    <div className="font-medium">Admin</div>
+                    <div className="font-medium">{user?.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      admin@quizhub.com
+                      {user?.email}
                     </div>
                   </div>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -116,7 +148,7 @@ export function DashboardLayout() {
                   Settings
                 </DropdownMenuItem> */}
                 <DropdownMenuItem className="text-destructive"
-                  onClick={()=>logout()}
+                  onClick={()=>adminLogout()}
                 >
                   Sign out
                 </DropdownMenuItem>

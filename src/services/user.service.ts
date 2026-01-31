@@ -15,8 +15,7 @@ export interface User {
 export interface UserPayload {
     name: string
     email: string
-    role: string
-    status: string
+    password: string
 }
 
 export interface UserStats {
@@ -24,6 +23,11 @@ export interface UserStats {
     name: string
     quizzesAttempted: number
     highestScorePercentage: double
+}
+
+export const getCurrentUser = async (): Promise<User> => {
+  const res = await api.get<User>(`/auth/me`)
+  return res.data
 }
 
 export const getUser = async (): Promise<User[]> => {
@@ -42,10 +46,18 @@ export const createUser = async (
   return res.data
 }
 
+export const updateProfile = async (
+  payload: UserPayload) => {
+  const res = await api.put<User>(`/users/profile`, payload)
+  return res.data
+}
+
 export const updateUser = async (
   userId: number,
   payload: UserPayload) => {
-  const res = await api.put<User>(`/users/${userId}}`, payload)
+    console.log(payload, userId)
+  const res = await api.put<User>(`/users/${userId}`, payload)
+
   return res.data
 }
 

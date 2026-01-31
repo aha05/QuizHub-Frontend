@@ -28,10 +28,10 @@ export function QuickActions() {
           <Button
             key={action.path}
             size="lg"
-            className={`flex items-center justify-center gap-2 hover:bg-primary/50 ${
+            className={`flex items-center justify-center gap-2 text-white/80 bg-primary/50 ${
               isActive
-                ? "bg-primary hover:bg-primary/90 text-white"
-                : "border-border/50 bg-transparent"
+                ? "bg-primary hover:bg-primary/60 text-white"
+                : "border-border/50 bg-primary bg-primary/20"
             }`}
             onClick={() => navigate(action.path)}
           >

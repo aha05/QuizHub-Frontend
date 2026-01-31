@@ -6,7 +6,7 @@ import { QuizQuestion } from "@/components/review-quiz"
 import { Clock, CheckCircle2 } from "lucide-react"
 import { getQuestion } from "@/services/question.service"
 import { getQuizById } from "@/services/quiz.service"
-import { getBestScore, getHistoryById} from "@/services/activity.service"
+import { getHistoryById} from "@/services/activity.service"
 
 
 export type Type = "SINGLE" | "MULTIPLE"
@@ -59,11 +59,10 @@ interface SubmitAnswerPayload {
 }
 
 export default function ReviewQuestionPage() {
-  const { quizId } = useParams<{ quizId: string }>()
+  const { quizId, id } = useParams<{ quizId: string, id: string }>()
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [quizHistory, setQuizHistory] = useState<HistoryItem>()
-  const [bestScore, setBestScore] = useState<QuizHistory[]>([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<(number | null)[]>(Array(questions.length).fill(null))
   const [timeRemaining, setTimeRemaining] = useState(600) // 10 minutes in seconds
@@ -74,15 +73,13 @@ export default function ReviewQuestionPage() {
   
       const loadQuiz = async () => {
         try {
-          const [questionData, quizData, bestScore, quizHistoryData] = await Promise.all([
+          const [questionData, quizData, quizHistoryData] = await Promise.all([
             getQuestion(Number(quizId)),
             getQuizById(Number(quizId)),
-            getBestScore(Number(quizId)),
-            getHistoryById(Number(quizId))
+            getHistoryById(Number(id))
           ])
           setQuestions(questionData)
           setQuiz(quizData)
-          setBestScore(bestScore)
           setQuizHistory(quizHistoryData)
           setAnswers(new Array(questionData.length).fill(null))
           setTimeRemaining(quizData.timeLimit * 60)
@@ -97,15 +94,15 @@ export default function ReviewQuestionPage() {
     }, [quizId])
 
 useEffect(() => {
-  if (!bestScore?.answers) return
+  if (!quizHistory?.answers) return
 
   const map = new Map<number, number[]>()
-  bestScore.answers.forEach(a => {
+  quizHistory.answers.forEach(a => {
     map.set(a.questionId, a.selectedOptionIds)
   })
 
   setAnswerMap(map)
-  }, [bestScore])
+  }, [quizHistory])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -143,7 +140,7 @@ useEffect(() => {
             <div className="flex items-center gap-2">
               <Clock className={`w-5 h-5 text-primary`} />
               <span className={`text-xl font-mono font-semibold text-foreground`}>
-                {formatTime(bestScore.timeTaken)}
+                {formatTime(quizHistory?.timeTaken)}
               </span>
             </div>
             <div className="flex items-center gap-2">

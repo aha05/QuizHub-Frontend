@@ -57,6 +57,18 @@ export const logout = async () => {
   }
 }
 
+export const adminLogout = async () => {
+  try {
+    await api.post("/auth/logout")
+  } catch (err) {
+    console.error(err)
+  } finally {
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("user")
+    window.location.href = "/admin/login"
+  }
+}
+
 
 export const isAuthenticated = () =>
   !!localStorage.getItem("accessToken")

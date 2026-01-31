@@ -81,7 +81,7 @@ export function QuizHistory() {
               <span className="text-sm text-muted-foreground">{formatDate(item.submittedAt)}</span>
             </div>
 
-            <Link to={`/quiz/${item.quizId}/history`}>
+            <Link to={`/quiz/${item.quizId}/history/${item.id}`}>
               <button className="w-full gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md">
                 Review Quiz
               </button>

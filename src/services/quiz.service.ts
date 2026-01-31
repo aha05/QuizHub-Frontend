@@ -102,9 +102,7 @@ export const submitQuiz = async (
   quizId: number,
   payload: SubmitAnswer
 ) => {
-  console.log(payload)
   const res = await api.post(`/quiz/${quizId}/submit`, payload)
-  console.log(res.data)
   return res.data
 }
 
