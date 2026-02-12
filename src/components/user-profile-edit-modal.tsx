@@ -18,12 +18,6 @@ import { updateProfile } from "@/services/user.service"
 interface EditModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: { name: string; email: string }) => void
-  initialData: {
-    id: number
-    name: string
-    email: string
-  }
 }
 
 export interface UserPayload {
@@ -35,7 +29,6 @@ export interface UserPayload {
 export function EditModal({
   isOpen,
   onClose,
-  onSave,
   initialData,
 }: EditModalProps) {
   const [name, setName] = useState("")
@@ -90,7 +83,6 @@ export function EditModal({
       await updateProfile(payload)
 
       toast.success("Profile updated successfully")
-      onSave({ name, email })
       onClose()
     } catch (err: any) {
       toast.error(err?.message || "Failed to update user")

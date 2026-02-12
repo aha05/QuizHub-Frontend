@@ -36,7 +36,7 @@ export const getUser = async (): Promise<User[]> => {
 }
 
 export const getUserStats = async (userId: number): Promise<UserStats> => {
-  const res = await api.get<UserStats>(`/user/${userId}/stats`)
+  const res = await api.get<UserStats>(`user-activity/user/${userId}/stats`)
   return res.data
 }
 
